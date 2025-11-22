@@ -32,6 +32,7 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _setupDioInterceptor();
     tryAutoLogin();
   }
 
@@ -176,5 +177,96 @@ class AuthController extends GetxController {
       return 'Gagal login: ${e.message ?? 'Terjadi kesalahan jaringan'}';
     }
     return 'Terjadi kesalahan, silakan coba lagi.';
+  }
+
+  /// Dipanggil oleh interceptor ketika dapat 401.
+  /// Coba refresh access token menggunakan refreshToken yang tersimpan.
+  ///
+  /// Return:
+  /// - AuthTokens baru kalau berhasil
+  /// - null kalau gagal (refresh token invalid/expired)
+  Future<AuthTokens?> tryRefreshTokens() async {
+    final currentRefreshToken = _refreshToken.value;
+    if (currentRefreshToken.isEmpty) {
+      return null;
+    }
+
+    try {
+      final res = await _authApi.refreshToken(
+        refreshToken: currentRefreshToken,
+      );
+
+      final tokens = res.data.tokens;
+
+      _accessToken.value = tokens.accessToken;
+      _refreshToken.value = tokens.refreshToken;
+
+      // Update Authorization header global
+      ApiClient().setAccessToken(tokens.accessToken);
+
+      // Simpan ke storage (kalau user sudah ada)
+      if (_user.value != null) {
+        await _saveSession(_user.value!, tokens);
+      } else {
+        await _storage.write(key: _keyAccessToken, value: tokens.accessToken);
+        await _storage.write(key: _keyRefreshToken, value: tokens.refreshToken);
+      }
+
+      return tokens;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Dipanggil ketika refresh token gagal → hapus sesi lokal dan balik ke login.
+  Future<void> forceLogoutToLogin() async {
+    await _clearSession();
+    Get.offAllNamed(AppRoutes.login);
+  }
+
+  void _setupDioInterceptor() {
+    final dio = ApiClient().dio;
+
+    dio.interceptors.add(
+      QueuedInterceptorsWrapper(
+        onError: (error, handler) async {
+          final response = error.response;
+          final requestOptions = error.requestOptions;
+
+          // Cek apakah request ini diminta untuk skip refresh (misalnya refresh-token itu sendiri)
+          final shouldSkipRefresh = requestOptions.extra['skipRefresh'] == true;
+
+          // Kalau 401 dan bukan request yang di-skip, coba refresh token
+          if (response?.statusCode == 401 && !shouldSkipRefresh) {
+            try {
+              // Tandai supaya request ini tidak memicu refresh lagi jika gagal setelah retry
+              requestOptions.extra['skipRefresh'] = true;
+
+              final newTokens = await tryRefreshTokens();
+
+              if (newTokens != null) {
+                // Update Authorization header untuk request yang akan diulang
+                requestOptions.headers['Authorization'] =
+                    'Bearer ${newTokens.accessToken}';
+
+                // Ulangi request yang gagal
+                final cloneResponse = await dio.fetch(requestOptions);
+
+                return handler.resolve(cloneResponse);
+              } else {
+                // Refresh gagal → paksa user ke halaman login
+                await forceLogoutToLogin();
+              }
+            } catch (_) {
+              // Kalau ada problem saat refresh, paksa logout juga
+              await forceLogoutToLogin();
+            }
+          }
+
+          // Kalau bukan 401 atau skipRefresh, teruskan error apa adanya
+          return handler.next(error);
+        },
+      ),
+    );
   }
 }
