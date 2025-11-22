@@ -1,3 +1,3 @@
 class AppConfig {
-  static const String baseUrl = 'http://todo.hy-study.my.id/api';
+  static const String baseUrl = 'https://todo.hy-study.my.id/api';
 }

@@ -2,12 +2,28 @@ import 'package:get/get.dart';
 import 'package:todolist_app/routes/app_routes.dart';
 import 'package:todolist_app/pages/auth/login_page.dart';
 import 'package:todolist_app/pages/todo/todo_list_page.dart';
+import 'package:todolist_app/pages/todo/todo_form_page.dart';
+import 'package:todolist_app/bindings/auth_binding.dart';
+import 'package:todolist_app/bindings/todo_binding.dart';
 
 class AppPages {
   static const initial = AppRoutes.login;
 
   static final pages = <GetPage>[
-    GetPage(name: AppRoutes.login, page: () => const LoginPage()),
-    GetPage(name: AppRoutes.todos, page: () => const TodoListPage()),
+    GetPage(
+      name: AppRoutes.login,
+      page: () => const LoginPage(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.todos,
+      page: () => const TodoListPage(),
+      binding: TodoBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.todoForm,
+      page: () => const TodoFormPage(),
+      binding: TodoBinding(),
+    ),
   ];
 }
