@@ -51,6 +51,7 @@ class AuthApi {
       final response = await _dio.post(
         '/auth/refresh-token',
         data: {'refreshToken': refreshToken},
+        options: Options(extra: {'skipRefresh': true}),
       );
 
       final json = response.data as Map<String, dynamic>;

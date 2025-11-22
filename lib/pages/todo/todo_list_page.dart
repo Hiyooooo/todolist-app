@@ -9,7 +9,9 @@ import 'package:todolist_app/models/todo_model.dart';
 import 'package:todolist_app/routes/app_routes.dart';
 
 class TodoListPage extends StatelessWidget {
-  const TodoListPage({super.key});
+  TodoListPage({super.key});
+
+  final controller = Get.find<AuthController>();
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +21,11 @@ class TodoListPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Todos'),
+        title: Obx(() {
+          final user = authController.user;
+          final name = user?.name ?? 'User';
+          return Text('Hi, $name 👋');
+        }),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -29,6 +35,7 @@ class TodoListPage extends StatelessWidget {
           ),
         ],
       ),
+
       body: SafeArea(
         child: Obx(() {
           final isLoading = todoController.isLoading.value;
@@ -210,35 +217,55 @@ class TodoListPage extends StatelessWidget {
 
   Widget _buildStatusChip(String status) {
     String label;
+    Color color;
+
     switch (status) {
       case 'in_progress':
         label = 'In Progress';
+        color = Colors.blue;
         break;
       case 'completed':
         label = 'Completed';
+        color = Colors.green;
         break;
       default:
         label = 'Pending';
+        color = Colors.orange;
     }
 
-    return Chip(label: Text(label, style: const TextStyle(fontSize: 12)));
+    return Chip(
+      label: Text(
+        label,
+        style: const TextStyle(fontSize: 12, color: Colors.white),
+      ),
+      backgroundColor: color,
+    );
   }
 
   Widget _buildPriorityChip(String priority) {
     String label;
+    Color color;
+
     switch (priority) {
       case 'high':
         label = 'High';
+        color = Colors.red;
         break;
       case 'low':
         label = 'Low';
+        color = Colors.green;
         break;
       default:
         label = 'Medium';
+        color = Colors.orange;
     }
 
     return Chip(
-      label: Text('Priority: $label', style: const TextStyle(fontSize: 12)),
+      label: Text(
+        label,
+        style: const TextStyle(fontSize: 12, color: Colors.white),
+      ),
+      backgroundColor: color,
     );
   }
 }

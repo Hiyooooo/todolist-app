@@ -12,17 +12,17 @@ class AppPages {
   static final pages = <GetPage>[
     GetPage(
       name: AppRoutes.login,
-      page: () => const LoginPage(),
+      page: () => LoginPage(),
       binding: AuthBinding(),
     ),
     GetPage(
       name: AppRoutes.todos,
-      page: () => const TodoListPage(),
+      page: () => TodoListPage(),
       binding: TodoBinding(),
     ),
     GetPage(
       name: AppRoutes.todoForm,
-      page: () => const TodoFormPage(),
+      page: () => TodoFormPage(),
       binding: TodoBinding(),
     ),
   ];

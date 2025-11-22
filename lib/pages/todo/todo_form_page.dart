@@ -1,5 +1,3 @@
-// lib/pages/todo/todo_form_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -79,7 +77,6 @@ class _TodoFormPageState extends State<TodoFormPage> {
 
     try {
       if (_editingTodo == null) {
-        // Create
         await _todoController.createTodo(
           title: title,
           description: description,
@@ -87,8 +84,12 @@ class _TodoFormPageState extends State<TodoFormPage> {
           priority: _priority,
           dueDate: _dueDate,
         );
+        Get.snackbar(
+          'Sukses',
+          'Todo berhasil dibuat',
+          snackPosition: SnackPosition.BOTTOM,
+        );
       } else {
-        // Update
         await _todoController.updateTodo(
           id: _editingTodo!.id,
           title: title,
@@ -97,11 +98,16 @@ class _TodoFormPageState extends State<TodoFormPage> {
           priority: _priority,
           dueDate: _dueDate,
         );
+        Get.snackbar(
+          'Sukses',
+          'Todo berhasil diupdate',
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
 
-      Get.back(); // kembali ke list
+      Get.back();
     } catch (_) {
-      // errorMessage sudah di-set di controller, bisa tampil di bawah
+      // error ditangani oleh controller melalui errorMessage
     }
   }
 

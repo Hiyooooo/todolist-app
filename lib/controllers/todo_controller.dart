@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todolist_app/models/todo_model.dart';
 import 'package:todolist_app/services/todo_api.dart';
@@ -167,8 +168,21 @@ class TodoController extends GetxController {
     try {
       await _todoApi.deleteTodo(id);
       todos.removeWhere((t) => t.id == id);
+
+      Get.snackbar(
+        'Sukses',
+        'Todo berhasil dihapus',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } catch (e) {
       errorMessage.value = _mapErrorToMessage(e);
+      Get.snackbar(
+        'Error',
+        errorMessage.value,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
