@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todolist_app/controllers/auth_controller.dart';
+import 'package:todolist_app/routes/app_routes.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -93,6 +94,14 @@ class _LoginPageState extends State<LoginPage> {
                             )
                           : const Text('Login'),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextButton(
+                    onPressed: () {
+                      Get.toNamed(AppRoutes.register);
+                    },
+                    child: const Text('Belum punya akun? Daftar'),
                   ),
                 ],
               );

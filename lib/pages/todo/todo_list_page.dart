@@ -1,5 +1,3 @@
-// lib/pages/todo/todo_list_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -39,7 +37,7 @@ class TodoListPage extends StatelessWidget {
       body: SafeArea(
         child: Obx(() {
           final isLoading = todoController.isLoading.value;
-          final isRefreshing = todoController.isRefreshing.value;
+          final isRxefreshing = todoController.isRefreshing.value;
           final todos = todoController.todos;
           final error = todoController.errorMessage.value;
 
