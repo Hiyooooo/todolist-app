@@ -102,14 +102,17 @@ class TodoListPage extends StatelessWidget {
                   );
                 }
 
-                // Ada data & match search
+                // Grouping by status
+                final groupedItems = _buildGroupedItems(filteredTodos.toList());
+
                 return RefreshIndicator(
                   onRefresh: () => todoController.fetchTodos(refresh: true),
                   child: ListView.builder(
                     padding: const EdgeInsets.only(bottom: 80),
-                    itemCount: filteredTodos.length + 1,
+                    itemCount: groupedItems.length + 1, // +1 untuk "Load more"
                     itemBuilder: (context, index) {
-                      if (index == filteredTodos.length) {
+                      // Row terakhir: tombol Load more
+                      if (index == groupedItems.length) {
                         if (!todoController.hasMore) {
                           return const SizedBox.shrink();
                         }
@@ -140,66 +143,103 @@ class TodoListPage extends StatelessWidget {
                         );
                       }
 
-                      final TodoModel todo = filteredTodos[index];
-                      final isCompleted = todo.status == 'completed';
+                      final item = groupedItems[index];
 
-                      return Dismissible(
-                        key: ValueKey(todo.id),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: const Icon(Icons.delete, color: Colors.white),
-                        ),
-                        confirmDismiss: (direction) async {
-                          return await _confirmDelete(context);
-                        },
-                        onDismissed: (_) {
-                          todoController.deleteTodo(todo.id);
-                        },
-                        child: ListTile(
-                          leading: IconButton(
-                            icon: Icon(
-                              isCompleted
-                                  ? Icons.check_circle
-                                  : Icons.radio_button_unchecked,
-                              color: isCompleted ? Colors.green : Colors.grey,
-                            ),
-                            onPressed: () =>
-                                todoController.toggleComplete(todo),
-                          ),
-                          title: Text(
-                            todo.title,
-                            style: TextStyle(
-                              decoration: isCompleted
-                                  ? TextDecoration.lineThrough
-                                  : TextDecoration.none,
-                            ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      if (item is _HeaderItem) {
+                        // Section header
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                          child: Row(
                             children: [
-                              if (todo.description != null &&
-                                  todo.description!.isNotEmpty)
-                                Text(todo.description!),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  _buildStatusChip(todo.status),
-                                  const SizedBox(width: 8),
-                                  _buildPriorityChip(todo.priority),
-                                ],
+                              Container(
+                                width: 4,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: item.color,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
                               ),
-                              // 🔔 Reminder berdasarkan dueDate
-                              _buildDueReminder(todo, dateFormat),
+                              const SizedBox(width: 8),
+                              Text(
+                                item.title,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: item.color,
+                                ),
+                              ),
                             ],
                           ),
-                          onTap: () {
-                            Get.toNamed(AppRoutes.todoForm, arguments: todo);
+                        );
+                      } else if (item is _TodoItem) {
+                        final todo = item.todo;
+                        final isCompleted = todo.status == 'completed';
+
+                        return Dismissible(
+                          key: ValueKey(todo.id),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            color: Colors.red,
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                            ),
+                          ),
+                          confirmDismiss: (direction) async {
+                            return await _confirmDelete(context);
                           },
-                        ),
-                      );
+                          onDismissed: (_) {
+                            todoController.deleteTodo(todo.id);
+                          },
+                          child: ListTile(
+                            leading: IconButton(
+                              icon: Icon(
+                                isCompleted
+                                    ? Icons.check_circle
+                                    : Icons.radio_button_unchecked,
+                                color: isCompleted ? Colors.green : Colors.grey,
+                              ),
+                              onPressed: () =>
+                                  todoController.toggleComplete(todo),
+                            ),
+                            title: Text(
+                              todo.title,
+                              style: TextStyle(
+                                decoration: isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                              ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (todo.description != null &&
+                                    todo.description!.isNotEmpty)
+                                  Text(todo.description!),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    _buildStatusChip(todo.status),
+                                    const SizedBox(width: 8),
+                                    _buildPriorityChip(todo.priority),
+                                  ],
+                                ),
+                                // Reminder berdasarkan dueDate
+                                _buildDueReminder(todo, dateFormat),
+                              ],
+                            ),
+                            onTap: () {
+                              Get.toNamed(AppRoutes.todoForm, arguments: todo);
+                            },
+                          ),
+                        );
+                      }
+
+                      // fallback
+                      return const SizedBox.shrink();
                     },
                   ),
                 );
@@ -488,4 +528,47 @@ class TodoListPage extends StatelessWidget {
       );
     });
   }
+}
+
+/// ===== Helper class untuk grouping list =====
+
+abstract class _ListItem {}
+
+class _HeaderItem extends _ListItem {
+  final String title;
+  final Color color;
+
+  _HeaderItem(this.title, this.color);
+}
+
+class _TodoItem extends _ListItem {
+  final TodoModel todo;
+
+  _TodoItem(this.todo);
+}
+
+/// Urutan group: Pending → In Progress → Completed
+List<_ListItem> _buildGroupedItems(List<TodoModel> todos) {
+  final items = <_ListItem>[];
+
+  final pending = todos.where((t) => t.status == 'pending').toList();
+  final inProgress = todos.where((t) => t.status == 'in_progress').toList();
+  final completed = todos.where((t) => t.status == 'completed').toList();
+
+  if (pending.isNotEmpty) {
+    items.add(_HeaderItem('Pending', Colors.orange));
+    items.addAll(pending.map<_ListItem>((t) => _TodoItem(t)));
+  }
+
+  if (inProgress.isNotEmpty) {
+    items.add(_HeaderItem('In Progress', Colors.blue));
+    items.addAll(inProgress.map<_ListItem>((t) => _TodoItem(t)));
+  }
+
+  if (completed.isNotEmpty) {
+    items.add(_HeaderItem('Completed', Colors.green));
+    items.addAll(completed.map<_ListItem>((t) => _TodoItem(t)));
+  }
+
+  return items;
 }
