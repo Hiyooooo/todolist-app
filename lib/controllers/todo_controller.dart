@@ -20,6 +20,8 @@ class TodoController extends GetxController {
   final sortBy = 'createdAt'.obs; // createdAt | dueDate
   final sortOrder = 'desc'.obs; // asc | desc
 
+  final searchQuery = ''.obs;
+
   int _page = 1;
   final int _limit = 10;
   bool _hasMore = true;
@@ -80,13 +82,19 @@ class TodoController extends GetxController {
 
     try {
       _page += 1;
-      final result = await _todoApi.getTodos(page: _page, limit: _limit);
+      final result = await _todoApi.getTodos(
+        page: _page,
+        limit: _limit,
+        status: statusFilter.value == 'all' ? null : statusFilter.value,
+        priority: priorityFilter.value == 'all' ? null : priorityFilter.value,
+        sortBy: sortBy.value,
+        sortOrder: sortOrder.value,
+      );
 
       todos.addAll(result.items);
       _hasMore = _page < result.totalPages;
     } catch (e) {
       errorMessage.value = _mapErrorToMessage(e);
-      // kalau error saat loadMore, kembalikan page
       _page -= 1;
     } finally {
       isLoadingMore.value = false;
@@ -112,7 +120,6 @@ class TodoController extends GetxController {
         dueDate: dueDate,
       );
 
-      // Masukkan ke paling atas list
       todos.insert(0, todo);
     } catch (e) {
       errorMessage.value = _mapErrorToMessage(e);
@@ -242,5 +249,9 @@ class TodoController extends GetxController {
     _page = 1;
     _hasMore = true;
     fetchTodos(refresh: true);
+  }
+
+  void updateSearchQuery(String value) {
+    searchQuery.value = value;
   }
 }

@@ -66,7 +66,7 @@ class TodoApi {
 
       final json = response.data as Map<String, dynamic>;
       return PaginatedTodos.fromJson(json);
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     }
   }
@@ -78,7 +78,7 @@ class TodoApi {
 
       final data = response.data['data'] as Map<String, dynamic>;
       return TodoModel.fromJson(data);
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     }
   }
@@ -105,7 +105,7 @@ class TodoApi {
 
       final data = response.data['data'] as Map<String, dynamic>;
       return TodoModel.fromJson(data);
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     }
   }
@@ -131,7 +131,7 @@ class TodoApi {
 
       final data = response.data['data'] as Map<String, dynamic>;
       return TodoModel.fromJson(data);
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     }
   }
@@ -157,7 +157,7 @@ class TodoApi {
 
       final data = response.data['data'] as Map<String, dynamic>;
       return TodoModel.fromJson(data);
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     }
   }
@@ -172,7 +172,7 @@ class TodoApi {
   Future<void> deleteTodo(String id) async {
     try {
       await _dio.delete('/todos/$id');
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     }
   }
