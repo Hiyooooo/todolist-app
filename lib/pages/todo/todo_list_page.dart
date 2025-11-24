@@ -7,7 +7,7 @@ import 'package:todolist_app/models/todo_model.dart';
 import 'package:todolist_app/routes/app_routes.dart';
 
 class TodoListPage extends StatelessWidget {
-  TodoListPage({super.key});
+  const TodoListPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -42,10 +42,23 @@ class TodoListPage extends StatelessWidget {
                 final todos = todoController.todos;
                 final error = todoController.errorMessage.value;
 
+                final query = todoController.searchQuery.value
+                    .trim()
+                    .toLowerCase();
+
+                final filteredTodos = query.isEmpty
+                    ? todos
+                    : todos.where((t) {
+                        final title = t.title.toLowerCase();
+                        return title.contains(query);
+                      }).toList();
+
+                // Loading awal
                 if (isLoading && todos.isEmpty) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
+                // Error awal
                 if (error.isNotEmpty && todos.isEmpty) {
                   return Center(
                     child: Padding(
@@ -59,6 +72,7 @@ class TodoListPage extends StatelessWidget {
                   );
                 }
 
+                // Tidak ada todo sama sekali
                 if (todos.isEmpty) {
                   return RefreshIndicator(
                     onRefresh: () => todoController.fetchTodos(refresh: true),
@@ -71,14 +85,31 @@ class TodoListPage extends StatelessWidget {
                   );
                 }
 
+                // Ada todo, tapi tidak ada yang match search
+                if (filteredTodos.isEmpty) {
+                  return RefreshIndicator(
+                    onRefresh: () => todoController.fetchTodos(refresh: true),
+                    child: ListView(
+                      children: const [
+                        SizedBox(height: 100),
+                        Center(
+                          child: Text(
+                            'Tidak ada todo yang cocok dengan pencarian.',
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Ada data & match search
                 return RefreshIndicator(
                   onRefresh: () => todoController.fetchTodos(refresh: true),
                   child: ListView.builder(
                     padding: const EdgeInsets.only(bottom: 80),
-                    itemCount: todos.length + 1, // +1 buat row "Load more"
+                    itemCount: filteredTodos.length + 1,
                     itemBuilder: (context, index) {
-                      if (index == todos.length) {
-                        // Row paling bawah: tombol Load more
+                      if (index == filteredTodos.length) {
                         if (!todoController.hasMore) {
                           return const SizedBox.shrink();
                         }
@@ -109,7 +140,7 @@ class TodoListPage extends StatelessWidget {
                         );
                       }
 
-                      final TodoModel todo = todos[index];
+                      final TodoModel todo = filteredTodos[index];
                       final isCompleted = todo.status == 'completed';
 
                       return Dismissible(
@@ -158,24 +189,13 @@ class TodoListPage extends StatelessWidget {
                                   _buildStatusChip(todo.status),
                                   const SizedBox(width: 8),
                                   _buildPriorityChip(todo.priority),
-                                  const SizedBox(width: 8),
-                                  if (todo.dueDate != null)
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.event, size: 14),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          dateFormat.format(todo.dueDate!),
-                                          style: const TextStyle(fontSize: 12),
-                                        ),
-                                      ],
-                                    ),
                                 ],
                               ),
+                              // 🔔 Reminder berdasarkan dueDate
+                              _buildDueReminder(todo, dateFormat),
                             ],
                           ),
                           onTap: () {
-                            // Edit todo → buka form dengan argumen todo
                             Get.toNamed(AppRoutes.todoForm, arguments: todo);
                           },
                         ),
@@ -272,6 +292,65 @@ class TodoListPage extends StatelessWidget {
     );
   }
 
+  /// Reminder due date (overdue / today / soon)
+  Widget _buildDueReminder(TodoModel todo, DateFormat dateFormat) {
+    if (todo.dueDate == null) {
+      return const SizedBox.shrink();
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final due = DateTime(
+      todo.dueDate!.year,
+      todo.dueDate!.month,
+      todo.dueDate!.day,
+    );
+
+    final diff = due.difference(today).inDays;
+
+    String text;
+    Color color;
+
+    if (todo.status == 'completed') {
+      text = 'Selesai • Jatuh tempo ${dateFormat.format(due)}';
+      color = Colors.green;
+    } else if (diff < 0) {
+      final daysLate = diff.abs();
+      if (daysLate == 1) {
+        text = 'Terlambat 1 hari (jatuh tempo ${dateFormat.format(due)})';
+      } else {
+        text =
+            'Terlambat $daysLate hari (jatuh tempo ${dateFormat.format(due)})';
+      }
+      color = Colors.red;
+    } else if (diff == 0) {
+      text = 'Jatuh tempo hari ini';
+      color = Colors.orange;
+    } else if (diff == 1) {
+      text = 'Jatuh tempo besok';
+      color = Colors.orange;
+    } else if (diff <= 3) {
+      text = 'Jatuh tempo dalam $diff hari';
+      color = Colors.orange;
+    } else {
+      text = 'Jatuh tempo ${dateFormat.format(due)}';
+      color = Colors.grey;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4.0),
+      child: Row(
+        children: [
+          Icon(Icons.alarm, size: 14, color: color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(text, style: TextStyle(fontSize: 12, color: color)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFilterBar(TodoController todoController) {
     return Obx(() {
       final statusValue = todoController.statusFilter.value;
@@ -283,6 +362,19 @@ class TodoListPage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         child: Column(
           children: [
+            // SEARCH BAR
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Cari berdasarkan judul',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              onChanged: todoController.updateSearchQuery,
+            ),
+            const SizedBox(height: 8),
+
+            // FILTER BAR (status & priority)
             Row(
               children: [
                 Expanded(
@@ -340,6 +432,8 @@ class TodoListPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
+
+            // SORT BAR (sort by & order)
             Row(
               children: [
                 Expanded(
