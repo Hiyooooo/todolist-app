@@ -269,4 +269,38 @@ class AuthController extends GetxController {
       ),
     );
   }
+
+  /// Register user baru, lalu auto-login.
+  Future<void> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      errorMessage.value = 'Nama, email, dan password wajib diisi.';
+      return;
+    }
+
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      // 1) Daftarkan user
+      await _authApi.register(name: name, email: email, password: password);
+
+      Get.snackbar(
+        'Sukses',
+        'Registrasi berhasil, masuk ke akun...',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+
+      // 2) Auto-login pakai email & password yang sama
+      await login(email, password);
+      // login() sudah akan set token, simpan session, dan navigate ke todos
+    } catch (e) {
+      errorMessage.value = _mapErrorToMessage(e);
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }
