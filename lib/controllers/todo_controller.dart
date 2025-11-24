@@ -15,6 +15,11 @@ class TodoController extends GetxController {
   final isSaving = false.obs;
   final errorMessage = ''.obs;
 
+  final statusFilter = 'all'.obs; // all | pending | in_progress | completed
+  final priorityFilter = 'all'.obs; // all | low | medium | high
+  final sortBy = 'createdAt'.obs; // createdAt | dueDate
+  final sortOrder = 'desc'.obs; // asc | desc
+
   int _page = 1;
   final int _limit = 10;
   bool _hasMore = true;
@@ -39,7 +44,14 @@ class TodoController extends GetxController {
     errorMessage.value = '';
 
     try {
-      final result = await _todoApi.getTodos(page: _page, limit: _limit);
+      final result = await _todoApi.getTodos(
+        page: _page,
+        limit: _limit,
+        status: statusFilter.value == 'all' ? null : statusFilter.value,
+        priority: priorityFilter.value == 'all' ? null : priorityFilter.value,
+        sortBy: sortBy.value,
+        sortOrder: sortOrder.value,
+      );
 
       if (refresh || initial) {
         todos.assignAll(result.items);
@@ -198,5 +210,37 @@ class TodoController extends GetxController {
       return 'Gagal memuat data: ${e.message ?? 'Terjadi kesalahan jaringan.'}';
     }
     return 'Terjadi kesalahan, silakan coba lagi.';
+  }
+
+  void updateStatusFilter(String value) {
+    if (statusFilter.value == value) return;
+    statusFilter.value = value;
+    _page = 1;
+    _hasMore = true;
+    fetchTodos(refresh: true);
+  }
+
+  void updatePriorityFilter(String value) {
+    if (priorityFilter.value == value) return;
+    priorityFilter.value = value;
+    _page = 1;
+    _hasMore = true;
+    fetchTodos(refresh: true);
+  }
+
+  void updateSortBy(String value) {
+    if (sortBy.value == value) return;
+    sortBy.value = value;
+    _page = 1;
+    _hasMore = true;
+    fetchTodos(refresh: true);
+  }
+
+  void updateSortOrder(String value) {
+    if (sortOrder.value == value) return;
+    sortOrder.value = value;
+    _page = 1;
+    _hasMore = true;
+    fetchTodos(refresh: true);
   }
 }
