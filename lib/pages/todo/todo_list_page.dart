@@ -22,15 +22,9 @@ class TodoListPage extends StatelessWidget {
           final name = user?.name ?? 'User';
           return Text('Hi, $name 👋');
         }),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              authController.logout();
-            },
-          ),
-        ],
+        // 🔥 actions DIHAPUS, karena sekarang pakai bottom nav & profile page
       ),
+
       body: SafeArea(
         child: Column(
           children: [
