@@ -15,6 +15,8 @@ class TodoListPage extends StatelessWidget {
     final authController = Get.find<AuthController>();
     final dateFormat = DateFormat('dd MMM yyyy');
 
+    print('Auth Hash Todo: ${authController.hashCode}');
+
     return Scaffold(
       appBar: AppBar(
         title: Obx(() {
@@ -22,15 +24,9 @@ class TodoListPage extends StatelessWidget {
           final name = user?.name ?? 'User';
           return Text('Hi, $name 👋');
         }),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              authController.logout();
-            },
-          ),
-        ],
+        // 🔥 actions DIHAPUS, karena sekarang pakai bottom nav & profile page
       ),
+
       body: SafeArea(
         child: Column(
           children: [
