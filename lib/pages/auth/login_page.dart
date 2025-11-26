@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todolist_app/controllers/auth_controller.dart';
 import 'package:todolist_app/routes/app_routes.dart';
+import 'package:todolist_app/widgets/common/app_textfield.dart';
+import 'package:todolist_app/widgets/common/app_button.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -28,13 +30,6 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _onLoginPressed() {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    _authController.login(email, password);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,23 +52,23 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  TextField(
+                  // Email
+                  AppTextField(
                     controller: _emailController,
+                    label: 'Email',
+                    hint: 'masukkan email',
+                    prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                    ),
                   ),
                   const SizedBox(height: 16),
 
-                  TextField(
+                  // Password
+                  AppTextField(
                     controller: _passwordController,
+                    label: 'Password',
+                    hint: '••••••••',
+                    prefixIcon: Icons.lock_outline,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      border: OutlineInputBorder(),
-                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -82,26 +77,26 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 8),
                   ],
 
-                  SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : _onLoginPressed,
-                      child: isLoading
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Login'),
-                    ),
+                  // Button Login
+                  AppButton.primary(
+                    label: isLoading ? 'Logging in...' : 'Login',
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            _authController.onLoginPressed(
+                              email: _emailController.text,
+                              password: _passwordController.text,
+                            );
+                          },
                   ),
                   const SizedBox(height: 16),
 
-                  TextButton(
+                  // Link ke register
+                  AppButton.text(
+                    label: 'Belum punya akun? Daftar',
                     onPressed: () {
                       Get.toNamed(AppRoutes.register);
                     },
-                    child: const Text('Belum punya akun? Daftar'),
                   ),
                 ],
               );

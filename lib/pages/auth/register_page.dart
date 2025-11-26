@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todolist_app/controllers/auth_controller.dart';
 import 'package:todolist_app/routes/app_routes.dart';
+import 'package:todolist_app/widgets/common/app_textfield.dart';
+import 'package:todolist_app/widgets/common/app_button.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -31,16 +33,6 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _onRegisterPressed() {
-    if (!_formKey.currentState!.validate()) return;
-
-    final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    _authController.register(name: name, email: email, password: password);
   }
 
   @override
@@ -80,12 +72,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 24),
 
                     // Name
-                    TextFormField(
+                    AppTextField(
                       controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nama',
-                        border: OutlineInputBorder(),
-                      ),
+                      label: 'Nama',
+                      hint: 'Nama lengkap',
+                      prefixIcon: Icons.person_outline,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Nama wajib diisi';
@@ -96,13 +87,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 16),
 
                     // Email
-                    TextFormField(
+                    AppTextField(
                       controller: _emailController,
+                      label: 'Email',
+                      hint: 'email@contoh.com',
+                      prefixIcon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
-                      ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Email wajib diisi';
@@ -116,13 +106,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 16),
 
                     // Password
-                    TextFormField(
+                    AppTextField(
                       controller: _passwordController,
+                      label: 'Password',
+                      hint: 'minimal 6 karakter',
+                      prefixIcon: Icons.lock_outline,
                       obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        border: OutlineInputBorder(),
-                      ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Password wajib diisi';
@@ -140,29 +129,29 @@ class _RegisterPageState extends State<RegisterPage> {
                       const SizedBox(height: 8),
                     ],
 
-                    SizedBox(
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : _onRegisterPressed,
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Daftar'),
-                      ),
+                    // Button Daftar
+                    AppButton.primary(
+                      label: isLoading ? 'Mendaftarkan...' : 'Daftar',
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              if (!_formKey.currentState!.validate()) return;
+
+                              _authController.onRegisterPressed(
+                                name: _nameController.text,
+                                email: _emailController.text,
+                                password: _passwordController.text,
+                              );
+                            },
                     ),
 
                     const SizedBox(height: 16),
 
-                    TextButton(
+                    AppButton.text(
+                      label: 'Sudah punya akun? Login',
                       onPressed: () {
                         Get.offAllNamed(AppRoutes.login);
                       },
-                      child: const Text('Sudah punya akun? Login'),
                     ),
                   ],
                 ),

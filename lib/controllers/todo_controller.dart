@@ -255,3 +255,52 @@ class TodoController extends GetxController {
     searchQuery.value = value;
   }
 }
+
+class TodoStats {
+  final int total;
+  final int pending;
+  final int inProgress;
+  final int completed;
+  final int overdue;
+
+  const TodoStats({
+    required this.total,
+    required this.pending,
+    required this.inProgress,
+    required this.completed,
+    required this.overdue,
+  });
+}
+
+extension TodoStatsExtension on TodoController {
+  TodoStats get todoStats {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    int pending = 0;
+    int inProgress = 0;
+    int completed = 0;
+    int overdue = 0;
+
+    for (final t in todos) {
+      if (t.status == 'pending') pending++;
+      if (t.status == 'in_progress') inProgress++;
+      if (t.status == 'completed') completed++;
+
+      if (t.dueDate != null && t.status != 'completed') {
+        final due = DateTime(t.dueDate!.year, t.dueDate!.month, t.dueDate!.day);
+        if (due.isBefore(today)) {
+          overdue++;
+        }
+      }
+    }
+
+    return TodoStats(
+      total: todos.length,
+      pending: pending,
+      inProgress: inProgress,
+      completed: completed,
+      overdue: overdue,
+    );
+  }
+}

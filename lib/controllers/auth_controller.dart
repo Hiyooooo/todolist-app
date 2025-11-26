@@ -10,6 +10,9 @@ class AuthController extends GetxController {
   final AuthApi _authApi = AuthApi();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
+  String get displayName => user?.name ?? 'User';
+  String get displayEmail => user?.email ?? '-';
+
   // Keys untuk secure storage
   static const _keyAccessToken = 'accessToken';
   static const _keyRefreshToken = 'refreshToken';
@@ -35,7 +38,15 @@ class AuthController extends GetxController {
     _setupDioInterceptor();
   }
 
-  /// Coba baca token + user dari storage.
+  String get displayUsername {
+    final email = user?.email;
+    if (email == null || email.isEmpty || !email.contains('@')) {
+      return 'user';
+    }
+    return email.split('@').first;
+  }
+
+  /// Dipanggil di SplashPage untuk cek session
   Future<void> tryAutoLogin() async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -77,9 +88,19 @@ class AuthController extends GetxController {
     }
   }
 
+  /// === Helper dipanggil dari UI (login button) ===
+  Future<void> onLoginPressed({
+    required String email,
+    required String password,
+  }) {
+    return login(email, password);
+  }
+
   /// Login ke backend.
   Future<void> login(String email, String password) async {
-    if (email.isEmpty || password.isEmpty) {
+    final trimmedEmail = email.trim();
+
+    if (trimmedEmail.isEmpty || password.isEmpty) {
       errorMessage.value = 'Email dan password wajib diisi.';
       return;
     }
@@ -88,7 +109,10 @@ class AuthController extends GetxController {
     errorMessage.value = '';
 
     try {
-      final response = await _authApi.login(email: email, password: password);
+      final response = await _authApi.login(
+        email: trimmedEmail,
+        password: password,
+      );
 
       final loginData = response.data;
       final tokens = loginData.tokens;
@@ -242,12 +266,24 @@ class AuthController extends GetxController {
     );
   }
 
+  /// === Helper dipanggil dari UI (register button) ===
+  Future<void> onRegisterPressed({
+    required String name,
+    required String email,
+    required String password,
+  }) {
+    return register(name: name, email: email, password: password);
+  }
+
   Future<void> register({
     required String name,
     required String email,
     required String password,
   }) async {
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+    final trimmedName = name.trim();
+    final trimmedEmail = email.trim();
+
+    if (trimmedName.isEmpty || trimmedEmail.isEmpty || password.isEmpty) {
       errorMessage.value = 'Nama, email, dan password wajib diisi.';
       return;
     }
@@ -256,7 +292,11 @@ class AuthController extends GetxController {
     errorMessage.value = '';
 
     try {
-      await _authApi.register(name: name, email: email, password: password);
+      await _authApi.register(
+        name: trimmedName,
+        email: trimmedEmail,
+        password: password,
+      );
 
       Get.snackbar(
         'Sukses',
@@ -264,7 +304,7 @@ class AuthController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
 
-      await login(email, password);
+      await login(trimmedEmail, password);
     } catch (e) {
       errorMessage.value = _mapErrorToMessage(e);
     } finally {
