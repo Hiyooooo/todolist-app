@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:todolist_app/bindings/auth_binding.dart';
 import 'package:todolist_app/routes/app_pages.dart';
 
 void main() {
@@ -16,6 +17,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Todo List App',
       initialRoute: AppPages.initial,
+      initialBinding: AuthBinding(),
       getPages: AppPages.pages,
       // (opsional) theme dasar
       theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),

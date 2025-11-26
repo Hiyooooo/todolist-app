@@ -16,6 +16,8 @@ class ProfilePage extends StatelessWidget {
       'dd MMM yyyy',
     ); // belum dipakai, boleh dipakai nanti kalau ada "member since" beneran
 
+    print('Auth hash profile ${authController.hashCode}');
+
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
       body: SafeArea(
